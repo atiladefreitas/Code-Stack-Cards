@@ -12,7 +12,6 @@ import type {
   TrueFalseCard,
 } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { RevealButton } from "@/components/flashcard/reveal-button"
@@ -323,9 +322,6 @@ function ShortAnswerBody({
 
   return (
     <div>
-      <Badge variant="muted" className="mb-3">
-        Short answer
-      </Badge>
       <h2 className="text-xl leading-snug font-semibold tracking-tight text-foreground">
         {card.question}
       </h2>
@@ -365,9 +361,6 @@ function ExerciseBody({
 }) {
   return (
     <div>
-      <Badge variant="muted" className="mb-3">
-        Exercise
-      </Badge>
       <h2 className="text-xl leading-snug font-semibold tracking-tight text-foreground">
         {card.title}
       </h2>
