@@ -201,6 +201,10 @@ export function DeckView({ deck }: DeckViewProps) {
   const progress = ((index + (revealed ? 1 : 0)) / total) * 100
   const completed = effectiveSeen.size >= total
 
+  // Explanation cards have no answer to submit, so the user can always move on.
+  // Every other type requires the answer to be revealed/submitted first.
+  const canAdvance = card.type === "explanation" || revealed
+
   function markCurrentSeenIfNeeded() {
     if (card.type !== "explanation") return
     if (seen.has(card.id)) return
@@ -214,6 +218,7 @@ export function DeckView({ deck }: DeckViewProps) {
 
   function goNext() {
     if (index >= total - 1) return
+    if (!canAdvance) return
     markCurrentSeenIfNeeded()
     setDirection(1)
     setIndex((i) => i + 1)
@@ -440,10 +445,11 @@ export function DeckView({ deck }: DeckViewProps) {
             <Button
               size="lg"
               onClick={goNext}
-              disabled={index >= total - 1}
+              disabled={index >= total - 1 || !canAdvance}
               className="h-11 flex-1 rounded-xl"
+              title={!canAdvance ? "Answer the question first" : undefined}
             >
-              Next
+              {canAdvance ? "Next" : "Answer first"}
               <ArrowRight className="size-4" />
             </Button>
           </div>
