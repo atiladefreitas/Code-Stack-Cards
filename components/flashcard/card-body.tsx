@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { RevealButton } from "@/components/flashcard/reveal-button"
+import { RichText } from "@/components/flashcard/rich-text"
 
 export interface CardBodyProps {
   card: CardType
@@ -121,10 +122,10 @@ function ExplanationBody({ card }: { card: ExplanationCard }) {
   return (
     <div>
       <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-        {card.title}
+        <RichText text={card.title} />
       </h2>
       <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-        {card.content}
+        <RichText text={card.content} />
       </p>
     </div>
   )
@@ -159,7 +160,7 @@ function MultipleChoiceBody({
   return (
     <div>
       <h2 className="text-xl leading-snug font-semibold tracking-tight text-foreground">
-        {card.question}
+        <RichText text={card.question} />
       </h2>
       <ul className="mt-5 flex flex-col gap-2">
         {card.options.map((option) => {
@@ -206,7 +207,9 @@ function MultipleChoiceBody({
                     </span>
                   )}
                 </span>
-                <span className="leading-relaxed">{option}</span>
+                <span className="leading-relaxed">
+                  <RichText text={option} />
+                </span>
               </button>
             </li>
           )
@@ -228,7 +231,9 @@ function MultipleChoiceBody({
             <Lightbulb className="size-3" />
             Why
           </div>
-          <p className="text-sm leading-relaxed">{card.explanation}</p>
+          <p className="text-sm leading-relaxed">
+            <RichText text={card.explanation} />
+          </p>
         </div>
       ) : null}
       {/* MC self-grades automatically — no manual buttons */}
@@ -262,7 +267,7 @@ function TrueFalseBody({
   return (
     <div>
       <h2 className="text-xl leading-snug font-semibold tracking-tight text-foreground">
-        {card.question}
+        <RichText text={card.question} />
       </h2>
       <div className="mt-6 grid grid-cols-2 gap-3">
         {[true, false].map((value) => {
@@ -298,7 +303,9 @@ function TrueFalseBody({
             <Lightbulb className="size-3" />
             Why
           </div>
-          <p className="text-sm leading-relaxed">{card.explanation}</p>
+          <p className="text-sm leading-relaxed">
+            <RichText text={card.explanation} />
+          </p>
         </div>
       ) : null}
     </div>
@@ -323,7 +330,7 @@ function ShortAnswerBody({
   return (
     <div>
       <h2 className="text-xl leading-snug font-semibold tracking-tight text-foreground">
-        {card.question}
+        <RichText text={card.question} />
       </h2>
 
       <Textarea
@@ -338,7 +345,9 @@ function ShortAnswerBody({
         <RevealButton onReveal={onReveal} />
       ) : (
         <>
-          <AnswerReveal>{card.answer}</AnswerReveal>
+          <AnswerReveal>
+            <RichText text={card.answer} />
+          </AnswerReveal>
           <SelfGradeFooter onGrade={onGrade} />
         </>
       )}
@@ -362,10 +371,10 @@ function ExerciseBody({
   return (
     <div>
       <h2 className="text-xl leading-snug font-semibold tracking-tight text-foreground">
-        {card.title}
+        <RichText text={card.title} />
       </h2>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        {card.prompt}
+        <RichText text={card.prompt} />
       </p>
 
       {card.code ? (
@@ -384,7 +393,9 @@ function ExerciseBody({
               <span className="font-mono text-xs text-muted-foreground">
                 {`${i + 1}.`}
               </span>
-              <span className="leading-relaxed">{s}</span>
+              <span className="leading-relaxed">
+                <RichText text={s} />
+              </span>
             </li>
           ))}
         </ol>
@@ -395,7 +406,9 @@ function ExerciseBody({
           <RevealButton onReveal={onReveal} label="Reveal solution" />
         ) : (
           <>
-            <AnswerReveal>{card.answer}</AnswerReveal>
+            <AnswerReveal>
+              <RichText text={card.answer} />
+            </AnswerReveal>
             <SelfGradeFooter onGrade={onGrade} />
           </>
         )}
