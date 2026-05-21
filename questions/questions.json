@@ -1,0 +1,243 @@
+{
+  "deck": "React Internals — Flashcards",
+  "topics": ["Reconciliation & Diffing", "useMemo, useCallback, React.memo", "Context API"],
+  "cards": [
+    {
+      "id": 1,
+      "type": "explanation",
+      "topic": "Reconciliation & Diffing",
+      "title": "What is the virtual DOM?",
+      "content": "React keeps an in-memory snapshot of the UI called the virtual DOM. On every render, a new virtual DOM tree is produced and compared against the previous one. Only the differences are applied to the real DOM, minimizing expensive browser operations."
+    },
+    {
+      "id": 2,
+      "type": "multiple_choice",
+      "topic": "Reconciliation & Diffing",
+      "question": "What is the time complexity of React's diffing algorithm?",
+      "options": [
+        "O(n³) — comparing every node against every other node",
+        "O(n²) — quadratic tree comparison",
+        "O(n) — linear, using heuristics",
+        "O(log n) — binary search on the tree"
+      ],
+      "answer": "O(n) — linear, using heuristics",
+      "explanation": "React achieves O(n) by applying two heuristics: different types always produce a full subtree swap, and the key prop identifies list items by identity."
+    },
+    {
+      "id": 3,
+      "type": "explanation",
+      "topic": "Reconciliation & Diffing",
+      "title": "The two core diffing heuristics",
+      "content": "1. Different element type → React tears down the entire old subtree and mounts a fresh one, destroying all descendant state. 2. Same element type → React updates only the changed props and reuses the existing DOM node."
+    },
+    {
+      "id": 4,
+      "type": "true_false",
+      "topic": "Reconciliation & Diffing",
+      "question": "When a parent component changes its child's element type from <div> to <section>, React will try to reuse the existing DOM node.",
+      "answer": false,
+      "explanation": "React always does a full subtree remount when element types differ. The old subtree is unmounted (destroying state), and a brand new one is mounted."
+    },
+    {
+      "id": 5,
+      "type": "exercise",
+      "topic": "Reconciliation & Diffing",
+      "title": "Spot the bug",
+      "prompt": "The following list renders incorrectly after reordering items. Why?",
+      "code": "items.map((item, index) => (\n  <ListItem key={index} data={item} />\n))",
+      "answer": "Using array index as key ties identity to position. When items reorder, React sees the same keys in new positions and updates props instead of moving nodes — causing state mismatches and unnecessary re-renders. Fix: use a stable unique ID as the key."
+    },
+    {
+      "id": 6,
+      "type": "multiple_choice",
+      "topic": "Reconciliation & Diffing",
+      "question": "What is the React Fiber architecture primarily designed to solve?",
+      "options": [
+        "Make the virtual DOM faster to create",
+        "Allow reconciliation work to be paused and resumed, enabling priority-based scheduling",
+        "Replace the virtual DOM with direct DOM manipulation",
+        "Reduce the bundle size of React"
+      ],
+      "answer": "Allow reconciliation work to be paused and resumed, enabling priority-based scheduling",
+      "explanation": "Fiber breaks render work into small units that can be interrupted. High-priority updates (e.g. user input) can pause low-priority work (e.g. background data). The commit phase, however, is always synchronous."
+    },
+    {
+      "id": 7,
+      "type": "explanation",
+      "topic": "Reconciliation & Diffing",
+      "title": "Render phase vs. commit phase",
+      "content": "The render phase is interruptible — React builds the new fiber tree and calculates changes. The commit phase is synchronous and uninterruptible — React applies all DOM mutations at once, then fires useLayoutEffect (synchronously) and useEffect (after paint)."
+    },
+    {
+      "id": 8,
+      "type": "short_answer",
+      "topic": "Reconciliation & Diffing",
+      "question": "Why does wrapping a component in a different component type on every render cause performance issues?",
+      "answer": "React sees a new element type each render, triggering a full subtree unmount and remount. All child state is lost and components go through full mount lifecycles. Example: defining a component inside another component's render function."
+    },
+    {
+      "id": 9,
+      "type": "explanation",
+      "topic": "useMemo, useCallback, React.memo",
+      "title": "React.memo — the outer gate",
+      "content": "React.memo is a higher-order component. It wraps a component and skips re-rendering it if all props are shallowly equal to the previous render. It only prevents re-renders caused by the parent — if internal state or context changes, the component still re-renders."
+    },
+    {
+      "id": 10,
+      "type": "multiple_choice",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "What does useCallback memoize?",
+      "options": [
+        "The return value of a function",
+        "The function reference itself",
+        "The component render output",
+        "The props object passed to a component"
+      ],
+      "answer": "The function reference itself",
+      "explanation": "useCallback returns the same function object across renders as long as dependencies haven't changed. This is useful when passing callbacks to React.memo-wrapped children, since a new function reference on every render would break memoization."
+    },
+    {
+      "id": 11,
+      "type": "true_false",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "useMemo and useCallback are always worth adding to improve performance.",
+      "answer": false,
+      "explanation": "Memoization has a cost — it stores values and runs dependency comparisons on every render. Premature memoization adds complexity with no benefit. Only reach for these hooks when you've identified a real performance bottleneck."
+    },
+    {
+      "id": 12,
+      "type": "exercise",
+      "topic": "useMemo, useCallback, React.memo",
+      "title": "Fix the broken memoization",
+      "prompt": "Child is wrapped in React.memo but still re-renders on every parent render. What is wrong?",
+      "code": "function Parent() {\n  const [count, setCount] = useState(0);\n\n  const handleClick = () => {\n    console.log('clicked');\n  };\n\n  return <Child onClick={handleClick} />;\n}\n\nconst Child = React.memo(({ onClick }) => {\n  console.log('Child rendered');\n  return <button onClick={onClick}>Click</button>;\n});",
+      "answer": "handleClick is recreated as a new function reference on every Parent render. React.memo compares props by shallow equality — a new function reference means the prop 'changed', so Child re-renders. Fix: wrap handleClick with useCallback(() => { console.log('clicked'); }, [])."
+    },
+    {
+      "id": 13,
+      "type": "multiple_choice",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "When should you use useMemo?",
+      "options": [
+        "For every derived value in a component",
+        "When passing a callback to a child component",
+        "For expensive computations whose result shouldn't be recalculated on every render",
+        "To prevent a component from re-rendering"
+      ],
+      "answer": "For expensive computations whose result shouldn't be recalculated on every render",
+      "explanation": "useMemo caches a computed value and only recalculates it when dependencies change. Classic use cases: filtering/sorting large arrays, complex mathematical operations, or building objects that would otherwise cause downstream re-renders."
+    },
+    {
+      "id": 14,
+      "type": "short_answer",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "What is the difference between useMemo and useCallback in terms of what they return?",
+      "answer": "useMemo returns the result of calling the function — the computed value. useCallback returns the function itself without calling it. useCallback(fn, deps) is equivalent to useMemo(() => fn, deps)."
+    },
+    {
+      "id": 15,
+      "type": "exercise",
+      "topic": "useMemo, useCallback, React.memo",
+      "title": "Choose the right hook",
+      "prompt": "For each scenario, decide whether to use useMemo, useCallback, React.memo, or nothing:",
+      "scenarios": [
+        "Filtering a 10,000-item list based on a search string",
+        "A pure presentational Button component that receives an onClick prop",
+        "An event handler passed down two levels to a memoized child",
+        "A simple counter that displays count + 1"
+      ],
+      "answer": "1. useMemo — expensive derived value. 2. React.memo — skip re-renders when props haven't changed. 3. useCallback — stabilize the function reference so React.memo on the child isn't defeated. 4. Nothing — the computation is trivial; memoization overhead exceeds any benefit."
+    },
+    {
+      "id": 16,
+      "type": "true_false",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "React.memo prevents a component from re-rendering when its own internal state changes.",
+      "answer": false,
+      "explanation": "React.memo only compares incoming props. If the component calls useState or useReducer internally and state changes, it re-renders regardless of React.memo. Memo only guards against parent-triggered re-renders."
+    },
+    {
+      "id": 17,
+      "type": "explanation",
+      "topic": "Context API",
+      "title": "How the Context API works",
+      "content": "createContext creates a context object with a Provider component. The Provider accepts a value prop that is broadcast to any descendant calling useContext with that context. When the value reference changes, React walks the tree and re-renders every consumer — bypassing React.memo entirely. This makes context ideal for low-frequency globals like theme or auth state."
+    },
+    {
+      "id": 18,
+      "type": "multiple_choice",
+      "topic": "Context API",
+      "question": "What triggers a re-render in every useContext consumer?",
+      "options": [
+        "Any state change anywhere in the app",
+        "The Provider's value prop changing by reference",
+        "A parent component re-rendering above the Provider",
+        "The consumer component's own state changing"
+      ],
+      "answer": "The Provider's value prop changing by reference",
+      "explanation": "React compares the new and previous context value with Object.is. If the reference changes — even if the data is structurally identical — all consumers re-render. This is why inline objects like value={{ user, setUser }} in JSX are dangerous."
+    },
+    {
+      "id": 19,
+      "type": "true_false",
+      "topic": "Context API",
+      "question": "Wrapping a context consumer with React.memo will prevent it from re-rendering when the context value changes.",
+      "answer": false,
+      "explanation": "React.memo only guards against prop changes from a parent. Context updates bypass memo entirely — a memoized component will still re-render whenever the context value it consumes changes."
+    },
+    {
+      "id": 20,
+      "type": "exercise",
+      "topic": "Context API",
+      "title": "Spot the performance pitfall",
+      "prompt": "Every component consuming AuthContext re-renders on every keystroke in the search bar. Why?",
+      "code": "function App() {\n  const [user, setUser] = useState(null);\n  const [search, setSearch] = useState('');\n\n  return (\n    <AuthContext.Provider value={{ user, setUser }}>\n      <SearchBar value={search} onChange={setSearch} />\n      <UserProfile />\n    </AuthContext.Provider>\n  );\n}",
+      "answer": "App re-renders on every search keystroke, creating a new { user, setUser } object reference each time. Even though user hasn't changed, the new object reference causes all AuthContext consumers to re-render. Fix: memoize the value — const authValue = useMemo(() => ({ user, setUser }), [user]) — or lift the search state out of App into a separate component so App doesn't re-render on keystrokes."
+    },
+    {
+      "id": 21,
+      "type": "explanation",
+      "topic": "Context API",
+      "title": "Splitting contexts by update frequency",
+      "content": "A single large context that holds both slow-changing data (e.g. theme) and fast-changing data (e.g. scroll position) will re-render all consumers whenever either changes. The fix is to split them into separate contexts — consumers only subscribe to the context they need, so a scroll update doesn't repaint theme-dependent components."
+    },
+    {
+      "id": 22,
+      "type": "short_answer",
+      "topic": "Context API",
+      "question": "You have a UserContext that stores the full user object. A deeply nested Avatar component only needs user.avatarUrl. What problem might arise and how would you address it?",
+      "answer": "If any other field on user changes (e.g. user.lastSeen), Avatar re-renders even though avatarUrl didn't change. Solutions: (1) split the context so Avatar consumes a dedicated AvatarContext, (2) use a selector pattern with a state manager like Zustand or Redux, or (3) derive the value in the consuming component and memoize it — though context itself still triggers the re-render first."
+    },
+    {
+      "id": 23,
+      "type": "multiple_choice",
+      "topic": "Context API",
+      "question": "Which of the following is the safest pattern for a context that provides both state and a setter?",
+      "options": [
+        "value={{ theme, setTheme }} directly in JSX",
+        "Separate ThemeContext for the value and ThemeDispatchContext for the setter",
+        "Storing theme in a ref instead of state",
+        "Using a single context updated with Object.assign"
+      ],
+      "answer": "Separate ThemeContext for the value and ThemeDispatchContext for the setter",
+      "explanation": "Setters (dispatch functions) never change between renders. Splitting them into their own context means components that only dispatch actions never re-render when the state value changes — a common pattern recommended in the React docs."
+    },
+    {
+      "id": 24,
+      "type": "exercise",
+      "topic": "Context API",
+      "title": "Refactor for performance",
+      "prompt": "Refactor this context so that components consuming only the dispatch function do not re-render when count changes.",
+      "code": "const CounterContext = createContext();\n\nfunction CounterProvider({ children }) {\n  const [count, setCount] = useState(0);\n  return (\n    <CounterContext.Provider value={{ count, setCount }}>\n      {children}\n    </CounterContext.Provider>\n  );\n}",
+      "answer": "Split into two contexts:\n\nconst CountContext = createContext();\nconst CountDispatchContext = createContext();\n\nfunction CounterProvider({ children }) {\n  const [count, setCount] = useState(0);\n  return (\n    <CountContext.Provider value={count}>\n      <CountDispatchContext.Provider value={setCount}>\n        {children}\n      </CountDispatchContext.Provider>\n    </CountContext.Provider>\n  );\n}\n\nComponents calling useContext(CountDispatchContext) only get setCount, which is stable — they won't re-render when count changes."
+    },
+    {
+      "id": 25,
+      "type": "true_false",
+      "topic": "Context API",
+      "question": "Context is a good replacement for a state management library like Zustand or Redux in all cases.",
+      "answer": false,
+      "explanation": "Context lacks built-in selectors — you can't subscribe to a slice of context state. Every consumer re-renders on any value change. For high-frequency or granular state, dedicated libraries with selector support (Zustand, Redux Toolkit, Jotai) are significantly more performant."
+    }
+  ]
+}
