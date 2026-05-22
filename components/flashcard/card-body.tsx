@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { RevealButton } from "@/components/flashcard/reveal-button"
 import { RichText } from "@/components/flashcard/rich-text"
+import { useLanguage } from "@/components/language-provider"
 
 export interface CardBodyProps {
   card: CardType
@@ -76,11 +77,12 @@ export function CardBody({
 /* ---------------- shared bits ---------------- */
 
 function AnswerReveal({ children }: { children: React.ReactNode }) {
+  const { t } = useLanguage()
   return (
     <div className="mt-4 animate-in rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 duration-300 fade-in slide-in-from-bottom-1">
       <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-emerald-600 uppercase dark:text-emerald-400">
         <Lightbulb className="size-3" />
-        Answer
+        {t.answerLabel}
       </div>
       <div className="text-sm leading-relaxed">{children}</div>
     </div>
@@ -92,6 +94,7 @@ function SelfGradeFooter({
 }: {
   onGrade?: (correct: boolean) => void
 }) {
+  const { t } = useLanguage()
   if (!onGrade) return null
   return (
     <div className="mt-4 flex animate-in gap-2 duration-500 fade-in">
@@ -102,7 +105,7 @@ function SelfGradeFooter({
         className="h-11 flex-1 rounded-xl border-destructive/30 text-destructive hover:bg-destructive/10"
       >
         <X className="size-4" />
-        Got it wrong
+        {t.gotItWrong}
       </Button>
       <Button
         size="lg"
@@ -110,7 +113,7 @@ function SelfGradeFooter({
         className="h-11 flex-1 rounded-xl bg-emerald-600 text-white hover:bg-emerald-600/90"
       >
         <Check className="size-4" />
-        Got it right
+        {t.gotItRight}
       </Button>
     </div>
   )
@@ -144,6 +147,7 @@ function MultipleChoiceBody({
   onReveal: () => void
   onGrade?: (correct: boolean) => void
 }) {
+  const { t } = useLanguage()
   const [selected, setSelected] = React.useState<string | null>(null)
 
   function handlePick(option: string) {
@@ -223,13 +227,13 @@ function MultipleChoiceBody({
           disabled={selected == null}
           className="mt-5 h-11 w-full rounded-xl"
         >
-          Submit
+          {t.submit}
         </Button>
       ) : card.explanation ? (
         <div className="mt-4 animate-in rounded-xl border border-border/60 bg-muted/40 p-4 duration-300 fade-in slide-in-from-bottom-1">
           <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
             <Lightbulb className="size-3" />
-            Why
+            {t.whyLabel}
           </div>
           <p className="text-sm leading-relaxed">
             <RichText text={card.explanation} />
@@ -255,6 +259,7 @@ function TrueFalseBody({
   onReveal: () => void
   onGrade?: (correct: boolean) => void
 }) {
+  const { t } = useLanguage()
   const [picked, setPicked] = React.useState<boolean | null>(null)
 
   function pick(value: boolean) {
@@ -271,7 +276,7 @@ function TrueFalseBody({
       </h2>
       <div className="mt-6 grid grid-cols-2 gap-3">
         {[true, false].map((value) => {
-          const label = value ? "True" : "False"
+          const label = value ? t.true : t.false
           const isPicked = picked === value
           const isCorrect = value === card.answer
           const showCorrect = revealed && isCorrect
@@ -301,7 +306,7 @@ function TrueFalseBody({
         <div className="mt-4 animate-in rounded-xl border border-border/60 bg-muted/40 p-4 duration-300 fade-in slide-in-from-bottom-1">
           <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
             <Lightbulb className="size-3" />
-            Why
+            {t.whyLabel}
           </div>
           <p className="text-sm leading-relaxed">
             <RichText text={card.explanation} />
@@ -325,6 +330,7 @@ function ShortAnswerBody({
   onReveal: () => void
   onGrade?: (correct: boolean) => void
 }) {
+  const { t } = useLanguage()
   const [value, setValue] = React.useState("")
 
   return (
@@ -336,7 +342,7 @@ function ShortAnswerBody({
       <Textarea
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Type your answer…"
+        placeholder={t.typeYourAnswer}
         disabled={revealed}
         className="mt-4"
       />
@@ -368,6 +374,7 @@ function ExerciseBody({
   onReveal: () => void
   onGrade?: (correct: boolean) => void
 }) {
+  const { t } = useLanguage()
   return (
     <div>
       <h2 className="text-xl leading-snug font-semibold tracking-tight text-foreground">
@@ -403,7 +410,7 @@ function ExerciseBody({
 
       <div className="mt-5">
         {!revealed ? (
-          <RevealButton onReveal={onReveal} label="Reveal solution" />
+          <RevealButton onReveal={onReveal} label={t.revealSolution} />
         ) : (
           <>
             <AnswerReveal>

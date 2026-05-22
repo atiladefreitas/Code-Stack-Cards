@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { CardBody } from "@/components/flashcard/card-body"
+import { useLanguage } from "@/components/language-provider"
+import type { Strings } from "@/lib/i18n"
 
 interface DeckViewProps {
   deck: Deck
@@ -85,20 +87,20 @@ function readPersisted(deck: Deck): {
   }
 }
 
-function typeLabel(t: string) {
-  switch (t) {
+function typeLabel(type: string, t: Strings) {
+  switch (type) {
     case "multiple_choice":
-      return "Multiple choice"
+      return t.typeMultipleChoice
     case "true_false":
-      return "True / False"
+      return t.typeTrueFalse
     case "short_answer":
-      return "Short answer"
+      return t.typeShortAnswer
     case "exercise":
-      return "Exercise"
+      return t.typeExercise
     case "explanation":
-      return "Explanation"
+      return t.typeExplanation
     default:
-      return t
+      return type
   }
 }
 
@@ -128,6 +130,7 @@ function typeBadgeVariant(t: string): TypeBadgeVariant {
 }
 
 export function DeckView({ deck }: DeckViewProps) {
+  const { t } = useLanguage()
   const total = deck.cards.length
 
   // Lazy initializers read localStorage on first client render only.
@@ -330,14 +333,13 @@ export function DeckView({ deck }: DeckViewProps) {
               {deck.deck}
             </div>
             <div className="text-[11px] leading-tight text-muted-foreground">
-              {index + 1} of {total} · {correct.size} correct · {wrong.size}{" "}
-              wrong
+              {t.headerCounter(index + 1, total, correct.size, wrong.size)}
             </div>
           </div>
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Shuffle"
+            aria-label={t.shuffle}
             onClick={shuffle}
           >
             <Shuffle className="size-4" />
@@ -345,7 +347,7 @@ export function DeckView({ deck }: DeckViewProps) {
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Restart"
+            aria-label={t.restart}
             onClick={resetAll}
           >
             <RotateCcw className="size-4" />
@@ -370,6 +372,7 @@ export function DeckView({ deck }: DeckViewProps) {
               wrong={wrong.size}
               onRestart={resetAll}
               onShuffle={shuffle}
+              t={t}
             />
           ) : (
             <div
@@ -383,19 +386,19 @@ export function DeckView({ deck }: DeckViewProps) {
             >
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Badge variant={typeBadgeVariant(card.type)}>
-                  {typeLabel(card.type)}
+                  {typeLabel(card.type, t)}
                 </Badge>
                 <Badge variant="muted">{card.topic}</Badge>
                 {correct.has(card.id) ? (
                   <Badge variant="success">
                     <CheckCircle2 className="size-3" />
-                    Got it
+                    {t.gotIt}
                   </Badge>
                 ) : null}
                 {wrong.has(card.id) ? (
                   <Badge variant="destructive">
                     <X className="size-3" />
-                    Missed
+                    {t.missed}
                   </Badge>
                 ) : null}
               </div>
@@ -440,16 +443,16 @@ export function DeckView({ deck }: DeckViewProps) {
               className="h-11 flex-1 rounded-xl"
             >
               <ArrowLeft className="size-4" />
-              Back
+              {t.back}
             </Button>
             <Button
               size="lg"
               onClick={goNext}
               disabled={index >= total - 1 || !canAdvance}
               className="h-11 flex-1 rounded-xl"
-              title={!canAdvance ? "Answer the question first" : undefined}
+              title={!canAdvance ? t.answerFirstTooltip : undefined}
             >
-              {canAdvance ? "Next" : "Answer first"}
+              {canAdvance ? t.next : t.answerFirst}
               <ArrowRight className="size-4" />
             </Button>
           </div>
@@ -465,12 +468,14 @@ function CompletedView({
   wrong,
   onRestart,
   onShuffle,
+  t,
 }: {
   total: number
   correct: number
   wrong: number
   onRestart: () => void
   onShuffle: () => void
+  t: Strings
 }) {
   const pct =
     total === 0 ? 0 : Math.round((correct / Math.max(1, correct + wrong)) * 100)
@@ -480,16 +485,16 @@ function CompletedView({
         <CheckCircle2 className="size-8" />
       </div>
       <h2 className="mt-5 text-2xl font-semibold tracking-tight">
-        Deck complete
+        {t.deckComplete}
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        You went through all {total} cards.
+        {t.deckCompleteSubtitle(total)}
       </p>
 
       <div className="mt-6 grid w-full grid-cols-3 gap-3">
-        <Stat label="Correct" value={correct} accent="emerald" />
-        <Stat label="Wrong" value={wrong} accent="red" />
-        <Stat label="Score" value={`${pct}%`} accent="muted" />
+        <Stat label={t.statCorrect} value={correct} accent="emerald" />
+        <Stat label={t.statWrong} value={wrong} accent="red" />
+        <Stat label={t.statScore} value={`${pct}%`} accent="muted" />
       </div>
 
       <div className="mt-6 flex w-full flex-col gap-2">
@@ -499,7 +504,7 @@ function CompletedView({
           className="h-11 w-full rounded-xl"
         >
           <Shuffle className="size-4" />
-          Shuffle & study again
+          {t.shuffleAndStudy}
         </Button>
         <Button
           variant="outline"
@@ -508,7 +513,7 @@ function CompletedView({
           className="h-11 w-full rounded-xl"
         >
           <RotateCcw className="size-4" />
-          Reset progress
+          {t.resetProgress}
         </Button>
       </div>
     </div>

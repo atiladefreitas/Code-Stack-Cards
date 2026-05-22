@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { LanguageProvider } from "@/components/language-provider"
+import { LanguageToggle } from "@/components/language-toggle"
 import { cn } from "@/lib/utils"
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
@@ -56,7 +58,12 @@ export default function RootLayout({
       )}
     >
       <body className="overscroll-none bg-background text-foreground">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            {children}
+            <LanguageToggle />
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

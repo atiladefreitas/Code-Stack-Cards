@@ -1,0 +1,626 @@
+{
+  "deck": "Internals do React — Flashcards",
+  "topics": [
+    "Reconciliação & Diffing",
+    "useMemo, useCallback, React.memo",
+    "Context API"
+  ],
+  "cards": [
+    {
+      "id": 1,
+      "type": "explanation",
+      "topic": "Reconciliação & Diffing",
+      "title": "O que é o virtual DOM?",
+      "content": "O React mantém em memória uma representação da UI chamada virtual DOM. A cada renderização, uma nova árvore de virtual DOM é produzida e comparada com a anterior. Apenas as diferenças são aplicadas ao DOM real, minimizando operações caras no navegador."
+    },
+    {
+      "id": 2,
+      "type": "multiple_choice",
+      "topic": "Reconciliação & Diffing",
+      "question": "Qual é a complexidade de tempo do algoritmo de diffing do React?",
+      "options": [
+        "O(n³) — comparando cada nó com todos os outros",
+        "O(n²) — comparação quadrática da árvore",
+        "O(n) — linear, usando heurísticas",
+        "O(log n) — busca binária na árvore"
+      ],
+      "answer": "O(n) — linear, usando heurísticas",
+      "explanation": "O React atinge O(n) aplicando duas heurísticas: tipos diferentes sempre produzem a troca completa da subárvore, e a prop key identifica itens de lista por identidade."
+    },
+    {
+      "id": 3,
+      "type": "explanation",
+      "topic": "Reconciliação & Diffing",
+      "title": "As duas heurísticas centrais do diffing",
+      "content": "1. Tipos de elemento diferentes → o React destrói toda a subárvore antiga e monta uma nova do zero, eliminando todo o estado dos descendentes. 2. Mesmo tipo de elemento → o React atualiza apenas as props que mudaram e reutiliza o nó DOM existente."
+    },
+    {
+      "id": 4,
+      "type": "true_false",
+      "topic": "Reconciliação & Diffing",
+      "question": "Quando um componente pai muda o tipo do elemento filho de <div> para <section>, o React tentará reutilizar o nó DOM existente.",
+      "answer": false,
+      "explanation": "O React sempre faz a remontagem completa da subárvore quando os tipos de elemento são diferentes. A subárvore antiga é desmontada (destruindo o estado), e uma nova é montada do zero."
+    },
+    {
+      "id": 5,
+      "type": "exercise",
+      "topic": "Reconciliação & Diffing",
+      "title": "Encontre o bug",
+      "prompt": "A lista a seguir renderiza incorretamente após reordenar itens. Por quê?",
+      "code": "items.map((item, index) => (\n  <ListItem key={index} data={item} />\n))",
+      "answer": "Usar o índice do array como key amarra a identidade à posição. Quando os itens são reordenados, o React vê as mesmas keys em novas posições e atualiza props em vez de mover nós — causando desalinhamento de estado e re-renderizações desnecessárias. Correção: use um ID único e estável como key."
+    },
+    {
+      "id": 6,
+      "type": "multiple_choice",
+      "topic": "Reconciliação & Diffing",
+      "question": "Qual é o problema principal que a arquitetura React Fiber foi projetada para resolver?",
+      "options": [
+        "Tornar a criação do virtual DOM mais rápida",
+        "Permitir que o trabalho de reconciliação seja pausado e retomado, habilitando agendamento baseado em prioridade",
+        "Substituir o virtual DOM por manipulação direta do DOM",
+        "Reduzir o tamanho do bundle do React"
+      ],
+      "answer": "Permitir que o trabalho de reconciliação seja pausado e retomado, habilitando agendamento baseado em prioridade",
+      "explanation": "O Fiber divide o trabalho de renderização em pequenas unidades que podem ser interrompidas. Atualizações de alta prioridade (ex.: input do usuário) podem pausar trabalho de baixa prioridade (ex.: dados em segundo plano). A fase de commit, no entanto, é sempre síncrona."
+    },
+    {
+      "id": 7,
+      "type": "explanation",
+      "topic": "Reconciliação & Diffing",
+      "title": "Fase de render vs. fase de commit",
+      "content": "A fase de render é interrompível — o React constrói a nova fiber tree e calcula as mudanças. A fase de commit é síncrona e não interrompível — o React aplica todas as mutações do DOM de uma vez, depois dispara useLayoutEffect (sincronamente) e useEffect (após o paint)."
+    },
+    {
+      "id": 8,
+      "type": "short_answer",
+      "topic": "Reconciliação & Diffing",
+      "question": "Por que envolver um componente em um tipo de componente diferente a cada renderização causa problemas de performance?",
+      "answer": "O React vê um novo tipo de elemento a cada render, disparando uma desmontagem e remontagem completas da subárvore. Todo o estado dos filhos é perdido e os componentes passam por todo o ciclo de vida de montagem. Exemplo: definir um componente dentro da função de render de outro componente."
+    },
+    {
+      "id": 9,
+      "type": "explanation",
+      "topic": "useMemo, useCallback, React.memo",
+      "title": "React.memo — o portão externo",
+      "content": "React.memo é um higher-order component. Ele envolve um componente e pula sua re-renderização se todas as props forem superficialmente iguais às do render anterior. Ele só previne re-renderizações causadas pelo pai — se o estado interno ou o contexto mudarem, o componente ainda re-renderiza."
+    },
+    {
+      "id": 10,
+      "type": "multiple_choice",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "O que o useCallback memoiza?",
+      "options": [
+        "O valor de retorno de uma função",
+        "A referência da própria função",
+        "A saída de render do componente",
+        "O objeto de props passado a um componente"
+      ],
+      "answer": "A referência da própria função",
+      "explanation": "useCallback retorna o mesmo objeto de função entre renders enquanto as dependências não mudarem. Isso é útil ao passar callbacks para filhos envoltos em React.memo, já que uma nova referência de função a cada render quebraria a memoização."
+    },
+    {
+      "id": 11,
+      "type": "true_false",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "useMemo e useCallback sempre valem a pena para melhorar a performance.",
+      "answer": false,
+      "explanation": "Memoização tem custo — ela armazena valores e executa comparações de dependências a cada render. Memoização prematura adiciona complexidade sem benefício. Use esses hooks apenas quando você identificou um gargalo real de performance."
+    },
+    {
+      "id": 12,
+      "type": "exercise",
+      "topic": "useMemo, useCallback, React.memo",
+      "title": "Corrija a memoização quebrada",
+      "prompt": "Child está envolvido em React.memo mas ainda re-renderiza a cada render do pai. O que está errado?",
+      "code": "function Parent() {\n  const [count, setCount] = useState(0);\n\n  const handleClick = () => {\n    console.log('clicked');\n  };\n\n  return <Child onClick={handleClick} />;\n}\n\nconst Child = React.memo(({ onClick }) => {\n  console.log('Child rendered');\n  return <button onClick={onClick}>Click</button>;\n});",
+      "answer": "handleClick é recriado como uma nova referência de função a cada render do Parent. React.memo compara props por igualdade superficial — uma nova referência de função significa que a prop 'mudou', então Child re-renderiza. Correção: envolva handleClick com useCallback(() => { console.log('clicked'); }, [])."
+    },
+    {
+      "id": 13,
+      "type": "multiple_choice",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "Quando você deve usar useMemo?",
+      "options": [
+        "Para todo valor derivado em um componente",
+        "Ao passar um callback para um componente filho",
+        "Para computações caras cujo resultado não deve ser recalculado em cada render",
+        "Para impedir um componente de re-renderizar"
+      ],
+      "answer": "Para computações caras cujo resultado não deve ser recalculado em cada render",
+      "explanation": "useMemo armazena um valor computado e só o recalcula quando as dependências mudam. Casos clássicos: filtrar/ordenar arrays grandes, operações matemáticas complexas, ou construir objetos que de outra forma causariam re-renders em cascata."
+    },
+    {
+      "id": 14,
+      "type": "short_answer",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "Qual é a diferença entre useMemo e useCallback em termos do que eles retornam?",
+      "answer": "useMemo retorna o resultado de chamar a função — o valor computado. useCallback retorna a própria função sem chamá-la. useCallback(fn, deps) é equivalente a useMemo(() => fn, deps)."
+    },
+    {
+      "id": 15,
+      "type": "exercise",
+      "topic": "useMemo, useCallback, React.memo",
+      "title": "Escolha o hook certo",
+      "prompt": "Para cada cenário, decida se deve usar useMemo, useCallback, React.memo ou nada:",
+      "scenarios": [
+        "Filtrar uma lista de 10.000 itens com base em uma string de busca",
+        "Um componente de Button puramente apresentacional que recebe uma prop onClick",
+        "Um handler de evento passado dois níveis abaixo para um filho memoizado",
+        "Um contador simples que exibe count + 1"
+      ],
+      "answer": "1. useMemo — valor derivado caro. 2. React.memo — pular re-renders quando as props não mudaram. 3. useCallback — estabilizar a referência da função para que o React.memo no filho não seja derrotado. 4. Nada — a computação é trivial; o overhead da memoização excede qualquer benefício."
+    },
+    {
+      "id": 16,
+      "type": "true_false",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "React.memo previne um componente de re-renderizar quando seu próprio estado interno muda.",
+      "answer": false,
+      "explanation": "React.memo só compara as props recebidas. Se o componente chama useState ou useReducer internamente e o estado muda, ele re-renderiza independentemente do React.memo. O memo só protege contra re-renders disparados pelo pai."
+    },
+    {
+      "id": 17,
+      "type": "explanation",
+      "topic": "Context API",
+      "title": "Como a Context API funciona",
+      "content": "createContext cria um objeto de contexto com um componente Provider. O Provider aceita uma prop value que é transmitida a qualquer descendente que chame useContext com esse contexto. Quando a referência do value muda, o React percorre a árvore e re-renderiza todos os consumidores — ignorando React.memo por completo. Isso torna o contexto ideal para globais de baixa frequência como tema ou estado de autenticação."
+    },
+    {
+      "id": 18,
+      "type": "multiple_choice",
+      "topic": "Context API",
+      "question": "O que dispara um re-render em todos os consumidores de useContext?",
+      "options": [
+        "Qualquer mudança de estado em qualquer lugar do app",
+        "A mudança por referência da prop value do Provider",
+        "Um componente pai re-renderizando acima do Provider",
+        "A mudança do estado interno do componente consumidor"
+      ],
+      "answer": "A mudança por referência da prop value do Provider",
+      "explanation": "O React compara o novo valor do contexto com o anterior usando Object.is. Se a referência mudar — mesmo que os dados sejam estruturalmente idênticos — todos os consumidores re-renderizam. É por isso que objetos inline como value={{ user, setUser }} no JSX são perigosos."
+    },
+    {
+      "id": 19,
+      "type": "true_false",
+      "topic": "Context API",
+      "question": "Envolver um consumidor de contexto com React.memo vai impedi-lo de re-renderizar quando o valor do contexto mudar.",
+      "answer": false,
+      "explanation": "React.memo só protege contra mudanças de props vindas do pai. Atualizações de contexto ignoram o memo completamente — um componente memoizado ainda re-renderiza sempre que o valor do contexto que ele consome muda."
+    },
+    {
+      "id": 20,
+      "type": "exercise",
+      "topic": "Context API",
+      "title": "Identifique a armadilha de performance",
+      "prompt": "Todo componente que consome AuthContext re-renderiza a cada tecla digitada na barra de busca. Por quê?",
+      "code": "function App() {\n  const [user, setUser] = useState(null);\n  const [search, setSearch] = useState('');\n\n  return (\n    <AuthContext.Provider value={{ user, setUser }}>\n      <SearchBar value={search} onChange={setSearch} />\n      <UserProfile />\n    </AuthContext.Provider>\n  );\n}",
+      "answer": "App re-renderiza a cada tecla digitada, criando uma nova referência do objeto { user, setUser } toda vez. Mesmo que user não tenha mudado, a nova referência do objeto faz com que todos os consumidores de AuthContext re-renderizem. Correção: memoize o value — const authValue = useMemo(() => ({ user, setUser }), [user]) — ou eleve o estado de busca para fora de App em um componente separado para que App não re-renderize a cada tecla."
+    },
+    {
+      "id": 21,
+      "type": "explanation",
+      "topic": "Context API",
+      "title": "Divida contextos por frequência de atualização",
+      "content": "Um único contexto grande que armazena tanto dados de mudança lenta (ex.: tema) quanto dados de mudança rápida (ex.: posição do scroll) vai re-renderizar todos os consumidores sempre que qualquer um dos dois mudar. A correção é dividi-los em contextos separados — os consumidores assinam apenas o contexto que precisam, então uma atualização de scroll não repinta os componentes dependentes de tema."
+    },
+    {
+      "id": 22,
+      "type": "short_answer",
+      "topic": "Context API",
+      "question": "Você tem um UserContext que armazena o objeto user completo. Um componente Avatar profundamente aninhado só precisa de user.avatarUrl. Que problema pode surgir e como você o resolveria?",
+      "answer": "Se qualquer outro campo de user mudar (ex.: user.lastSeen), Avatar re-renderiza mesmo que avatarUrl não tenha mudado. Soluções: (1) dividir o contexto para que Avatar consuma um AvatarContext dedicado, (2) usar um padrão de seletor com um gerenciador de estado como Zustand ou Redux, ou (3) derivar o valor no componente consumidor e memoizá-lo — embora o contexto em si ainda dispare o re-render antes."
+    },
+    {
+      "id": 23,
+      "type": "multiple_choice",
+      "topic": "Context API",
+      "question": "Qual dos seguintes é o padrão mais seguro para um contexto que fornece tanto estado quanto um setter?",
+      "options": [
+        "value={{ theme, setTheme }} diretamente no JSX",
+        "ThemeContext separado para o valor e ThemeDispatchContext para o setter",
+        "Armazenar theme em uma ref em vez de state",
+        "Usar um único contexto atualizado com Object.assign"
+      ],
+      "answer": "ThemeContext separado para o valor e ThemeDispatchContext para o setter",
+      "explanation": "Setters (funções de dispatch) nunca mudam entre renders. Dividi-los em seu próprio contexto significa que componentes que só fazem dispatch nunca re-renderizam quando o valor do estado muda — um padrão comum recomendado nos docs do React."
+    },
+    {
+      "id": 24,
+      "type": "exercise",
+      "topic": "Context API",
+      "title": "Refatore para performance",
+      "prompt": "Refatore este contexto para que componentes que consomem apenas a função de dispatch não re-renderizem quando count mudar.",
+      "code": "const CounterContext = createContext();\n\nfunction CounterProvider({ children }) {\n  const [count, setCount] = useState(0);\n  return (\n    <CounterContext.Provider value={{ count, setCount }}>\n      {children}\n    </CounterContext.Provider>\n  );\n}",
+      "answer": "Divida em dois contextos:\n\nconst CountContext = createContext();\nconst CountDispatchContext = createContext();\n\nfunction CounterProvider({ children }) {\n  const [count, setCount] = useState(0);\n  return (\n    <CountContext.Provider value={count}>\n      <CountDispatchContext.Provider value={setCount}>\n        {children}\n      </CountDispatchContext.Provider>\n    </CountContext.Provider>\n  );\n}\n\nComponentes que chamam useContext(CountDispatchContext) só obtêm setCount, que é estável — eles não re-renderizam quando count muda."
+    },
+    {
+      "id": 25,
+      "type": "true_false",
+      "topic": "Context API",
+      "question": "Context é uma boa substituição para uma biblioteca de gerenciamento de estado como Zustand ou Redux em todos os casos.",
+      "answer": false,
+      "explanation": "Context não tem seletores embutidos — você não pode assinar uma fatia do estado do contexto. Todo consumidor re-renderiza a qualquer mudança de valor. Para estado granular ou de alta frequência, bibliotecas dedicadas com suporte a seletores (Zustand, Redux Toolkit, Jotai) são significativamente mais performáticas."
+    },
+    {
+      "id": 26,
+      "type": "explanation",
+      "topic": "Reconciliação & Diffing",
+      "title": "Por que o React mantém uma árvore virtual de UI",
+      "content": "Mexer no DOM real é uma das coisas mais caras que um app web pode fazer, então o React evita isso sempre que possível. Em vez disso, ele representa a UI como uma árvore leve de objetos JavaScript — o virtual DOM. Cada render produz uma árvore nova, que o React então reconcilia contra a anterior para descobrir o conjunto mínimo de mutações necessárias antes de qualquer chamada real ao DOM."
+    },
+    {
+      "id": 27,
+      "type": "explanation",
+      "topic": "Reconciliação & Diffing",
+      "title": "O virtual DOM, em termos simples",
+      "content": "Pense no virtual DOM como um rascunho da página que vive na memória. Quando o estado muda, o React desenha um novo rascunho e o coloca ao lado do antigo, circula apenas as diferenças e envia essas edições para o navegador. O navegador nunca vê os rascunhos — só as mudanças finais aplicadas cirurgicamente — e é isso que torna as atualizações baratas."
+    },
+    {
+      "id": 28,
+      "type": "explanation",
+      "topic": "Reconciliação & Diffing",
+      "title": "Virtual DOM: não é mágica, é só contabilidade",
+      "content": "O virtual DOM não é um DOM mais rápido — é um buffer de diffing. O React mantém dois snapshots em objetos simples da sua árvore de componentes: aquele que está atualmente na tela e aquele que suas funções de render acabaram de produzir. Uma passagem de reconciliação percorre as duas árvores em paralelo, e apenas os nós que de fato diferem são traduzidos em operações imperativas do DOM como appendChild ou setAttribute."
+    },
+    {
+      "id": 29,
+      "type": "explanation",
+      "topic": "Reconciliação & Diffing",
+      "title": "As duas regras que guiam o diff do React",
+      "content": "Regra um: se o tipo de elemento em uma posição muda (digamos, <ul> vira <ol>, ou <ComponentA> vira <ComponentB>), o React não tenta ser esperto — ele descarta a subárvore antiga inteira, incluindo todos os hooks e estado dentro dela, e constrói a nova do zero. Regra dois: se o tipo bate, o React mantém a instância existente viva e só ajusta as props ou atributos que realmente mudaram."
+    },
+    {
+      "id": 30,
+      "type": "explanation",
+      "topic": "Reconciliação & Diffing",
+      "title": "Como o React decide: reaproveitar ou reconstruir?",
+      "content": "Em cada posição da árvore o React faz uma única pergunta: 'o tipo do elemento é o mesmo de antes?' Um 'sim' significa atualização in-place — mesmo nó DOM, mesma instância de componente, só com as props ajustadas. Um 'não' dispara um reset duro: desmontar a subárvore antiga (estado, refs, efeitos e tudo mais) e então montar a nova do zero. É por isso que trocar um elemento wrapper pode silenciosamente apagar tudo abaixo dele."
+    },
+    {
+      "id": 31,
+      "type": "explanation",
+      "topic": "Reconciliação & Diffing",
+      "title": "Identidade de tipo é tudo",
+      "content": "O diffing do React se apoia em um atalho para se manter linear: ele nunca tenta casar nós entre tipos diferentes. Um <div> e um <span> na mesma posição são tratados como árvores completamente não relacionadas, mesmo que seus filhos sejam idênticos. O mesmo vale para componentes — <Foo /> e <Bar /> são estranhos para o React, e é por isso que mover um filho entre dois tipos diferentes de componente pai reseta todo o seu estado."
+    },
+    {
+      "id": 32,
+      "type": "explanation",
+      "topic": "Reconciliação & Diffing",
+      "title": "As duas fases de uma atualização do React",
+      "content": "Toda atualização se divide em duas fases. Primeiro a fase de render, onde o React chama seus componentes, constrói uma nova fiber tree e descobre o que mudou — essa fase pode ser pausada, reiniciada ou descartada por completo, então precisa ser pura. Depois a fase de commit, uma única rajada síncrona onde o React escreve as mutações no DOM, executa useLayoutEffect e finalmente agenda useEffect para disparar após o paint do navegador."
+    },
+    {
+      "id": 33,
+      "type": "explanation",
+      "topic": "Reconciliação & Diffing",
+      "title": "Por que render é interrompível mas commit não",
+      "content": "A fase de render é só JavaScript produzindo uma descrição da próxima UI — ainda sem efeitos colaterais visíveis ao usuário — então o React fica livre para fatiar o trabalho, ceder ao navegador e até descartar trabalho pela metade se algo mais urgente chegar. A fase de commit é o oposto: uma vez que o React começa a mutar o DOM, parar no meio deixaria a página em um estado rasgado, então ela executa até o fim em uma única rajada síncrona."
+    },
+    {
+      "id": 34,
+      "type": "explanation",
+      "topic": "Reconciliação & Diffing",
+      "title": "Timing de efeitos, render vs commit",
+      "content": "Conhecer a fronteira entre as fases clareia o timing dos efeitos. Qualquer coisa dentro do corpo de um componente executa durante o render e precisa ser pura. useLayoutEffect dispara sincronamente dentro da fase de commit, após o DOM ser atualizado mas antes do paint do navegador — perfeito para medir layout. useEffect é adiado até depois do paint, e é por isso que é o padrão seguro para data fetching e subscriptions."
+    },
+    {
+      "id": 35,
+      "type": "explanation",
+      "topic": "useMemo, useCallback, React.memo",
+      "title": "React.memo, o firewall de mudanças de props",
+      "content": "React.memo envolve um componente e intercepta seus renders disparados por um pai. Antes de re-renderizar, ele faz uma comparação superficial das novas props contra as anteriores; se nada mudou, ele desiste e reutiliza a saída do render anterior. Ele não congela o componente — atualizações de estado interno, mudanças em hooks e contexto consumido ainda causarão re-render, porque React.memo só protege a fronteira pai-para-filho."
+    },
+    {
+      "id": 36,
+      "type": "explanation",
+      "topic": "useMemo, useCallback, React.memo",
+      "title": "O que React.memo realmente pula",
+      "content": "Uma leitura errada comum do React.memo é que ele 'torna um componente puro' ou 'cacheia sua saída'. Ele não faz nenhuma das duas coisas. O que ele realmente faz é adicionar um portão no topo do componente: quando o pai re-renderiza, o React verifica cada prop por igualdade superficial, e se todas baterem, o corpo do componente é pulado nessa rodada. Mudanças de estado, mudanças de contexto e force-updates ignoram esse portão completamente."
+    },
+    {
+      "id": 37,
+      "type": "explanation",
+      "topic": "useMemo, useCallback, React.memo",
+      "title": "React.memo: um higher-order component, não um hook",
+      "content": "Diferente de useMemo e useCallback, React.memo não é chamado dentro de um componente — ele envolve um. Você entrega uma definição de componente e recebe de volta um novo componente que executa uma comparação superficial das props antes de cada render. É puramente uma otimização e só ajuda quando o pai re-renderiza com frequência enquanto as props do filho permanecem iguais por referência — passe um objeto novo ou uma arrow function inline e a memoização é silenciosamente derrotada."
+    },
+    {
+      "id": 38,
+      "type": "explanation",
+      "topic": "Context API",
+      "title": "Context, de ponta a ponta",
+      "content": "createContext te devolve duas coisas juntas: um componente Provider e um alvo de hook. Onde quer que um Provider esteja na árvore, todo descendente que chamar useContext(MyContext) lê a prop value atual. Quando esse value muda por referência, o React desce a partir do Provider e re-renderiza cada consumidor — e, importante, faz isso mesmo através de fronteiras de React.memo. É por isso que contexto encaixa bem em tema, locale ou usuário atual, mas sofre com dados que mudam rápido."
+    },
+    {
+      "id": 39,
+      "type": "explanation",
+      "topic": "Context API",
+      "title": "Como useContext encontra seu valor",
+      "content": "Cada objeto de contexto carrega um slot interno que guarda o valor do Provider mais próximo acima do consumidor. Quando você chama useContext(MyContext), o React sobe pela fiber tree em tempo de render, acha esse Provider e te entrega sua prop value atual. Não há subscription que você precise montar; o React rastreia a dependência por você e agenda um re-render em cada consumidor sempre que o value do Provider muda por referência."
+    },
+    {
+      "id": 40,
+      "type": "explanation",
+      "topic": "Context API",
+      "title": "Context: broadcast, não seletor",
+      "content": "Context é melhor pensado como um canal de broadcast. O Provider publica um único valor e cada assinante recebe o mesmo payload, por inteiro, sempre que ele muda. Não há jeito embutido de assinar só uma fatia desse valor — se a referência do Provider muda, todo chamador de useContext re-renderiza, ponto. Esse modelo 'tudo ou nada' é o que o torna poderoso para preocupações globais e doloroso para estado de alta frequência."
+    },
+    {
+      "id": 41,
+      "type": "explanation",
+      "topic": "Context API",
+      "title": "Divida contextos pela frequência com que mudam",
+      "content": "Misturar valores que raramente mudam (tema, usuário atual) com os que mudam com frequência (posição do mouse, offset do scroll) no mesmo contexto significa que cada atualização rápida re-renderiza também cada consumidor lento. O remédio padrão é dividir os dados em múltiplos contextos agrupados por cadência de atualização, para que cada consumidor assine só o fluxo de mudanças que realmente lhe interessa."
+    },
+    {
+      "id": 42,
+      "type": "explanation",
+      "topic": "Context API",
+      "title": "Um contexto, uma cadência",
+      "content": "Uma boa regra geral ao projetar contextos: todo consumidor de um contexto vai re-renderizar na taxa do campo que muda mais rápido nele. Então, se você coloca um valor que muda uma vez por sessão ao lado de um que muda uma vez por frame no mesmo Provider, você efetivamente promoveu os consumidores lentos a renderizar a cada frame. Dividi-los em contextos independentes restaura a frequência de atualização original para cada conjunto de consumidores."
+    },
+    {
+      "id": 43,
+      "type": "explanation",
+      "topic": "Context API",
+      "title": "Por que um AppContext gigante geralmente sai pela culatra",
+      "content": "É tentador expor tudo — auth, tema, feature flags, dados ao vivo — por meio de um único AppContext. O problema aparece depois: uma atualização minúscula em um campo reescreve a referência do value do Provider, e todo componente em qualquer lugar da árvore que chamou useContext(AppContext) re-renderiza, independentemente de qual campo ele realmente lê. Quebrar o monolito em contextos menores e específicos mantém os re-renders escopados aos consumidores que genuinamente se importam.",
+      "_note": "Variante do card 21 — mesma ideia, enquadrada em torno do antipadrão."
+    },
+    {
+      "id": 44,
+      "type": "multiple_choice",
+      "topic": "Reconciliação & Diffing",
+      "question": "Por que o algoritmo de diffing do React consegue rodar em tempo O(n) através da árvore de componentes?",
+      "options": [
+        "Porque o React cacheia os nós DOM do render anterior em um hash map indexado por tipo de elemento",
+        "Porque ele se apoia em heurísticas — tipos diferentes trocam subárvores inteiras, e keys identificam filhos de listas — em vez de um diff de árvore totalmente geral",
+        "Porque a reconciliação só roda na subárvore alterada, nunca na árvore inteira",
+        "Porque o virtual DOM é armazenado como um array plano, não uma árvore"
+      ],
+      "answer": "Porque ele se apoia em heurísticas — tipos diferentes trocam subárvores inteiras, e keys identificam filhos de listas — em vez de um diff de árvore totalmente geral",
+      "explanation": "Um diff árvore-para-árvore verdadeiramente geral é O(n³). O React contorna isso assumindo que o desenvolvedor segue duas regras: elementos de tipos diferentes produzem árvores diferentes, e keys estáveis identificam filhos entre renders. Com essas suposições, uma única passagem pela árvore é suficiente — daí o tempo linear."
+    },
+    {
+      "id": 45,
+      "type": "multiple_choice",
+      "topic": "Reconciliação & Diffing",
+      "question": "O tree-diff ótimo ingênuo é O(n³). O que permite o React fazê-lo em O(n) sem sacrificar correção na prática?",
+      "options": [
+        "Ele usa memoização para cachear comparações de subárvores entre renders",
+        "Ele roda o diffing em um Web Worker para que a main thread não seja bloqueada",
+        "Ele substitui uma caminhada guiada por heurísticas (atalho de igualdade de tipo + correspondência de filhos por key) por um diff totalmente geral, aceitando resultados subótimos quando as regras são violadas",
+        "Ele comprime o virtual DOM em uma trie binária antes da comparação"
+      ],
+      "answer": "Ele substitui uma caminhada guiada por heurísticas (atalho de igualdade de tipo + correspondência de filhos por key) por um diff totalmente geral, aceitando resultados subótimos quando as regras são violadas",
+      "explanation": "O React não computa o script de edição teoricamente mínimo — ele computa um bom o suficiente em tempo linear, confiando em duas heurísticas. Quando essas heurísticas estão erradas (ex.: keys instáveis ou tipos de wrapper trocados desnecessariamente), você tem montagens/desmontagens extras: saída correta, mas performance pior."
+    },
+    {
+      "id": 46,
+      "type": "multiple_choice",
+      "topic": "Reconciliação & Diffing",
+      "question": "Qual afirmação descreve com mais precisão a complexidade da reconciliação do React?",
+      "options": [
+        "O(n) amortizado, O(n³) no pior caso quando keys colidem",
+        "O(n log n), porque o React internamente ordena os filhos por key antes do diff",
+        "O(n) onde n é o número de elementos, alcançado por se recusar a diff através de fronteiras de tipo de elemento e usando keys como dicas de identidade para irmãos",
+        "O(n²) no caso geral, reduzido a O(n) apenas quando React.memo é aplicado a cada filho"
+      ],
+      "answer": "O(n) onde n é o número de elementos, alcançado por se recusar a diff através de fronteiras de tipo de elemento e usando keys como dicas de identidade para irmãos",
+      "explanation": "A complexidade é genuinamente O(n) — não amortizada, não condicional a memo. As duas heurísticas (igualdade de tipo corta a busca em cada posição; keys casam irmãos por identidade) são o que reduz o problema de cúbico a linear. React.memo não tem relação; é uma otimização separada de pular renders."
+    },
+    {
+      "id": 47,
+      "type": "multiple_choice",
+      "topic": "Reconciliação & Diffing",
+      "question": "Que problema a reescrita do Fiber foi introduzida para resolver?",
+      "options": [
+        "Longas passagens síncronas de reconciliação bloqueando a main thread, sem maneira de priorizar atualizações urgentes sobre atualizações em segundo plano",
+        "Uso excessivo de memória por armazenar duas árvores completas de virtual DOM na memória",
+        "A necessidade de suportar múltiplos renderers (DOM, Native) a partir de um único core do React",
+        "Tempos lentos de parse do bundle inicial causados pelo antigo stack reconciler"
+      ],
+      "answer": "Longas passagens síncronas de reconciliação bloqueando a main thread, sem maneira de priorizar atualizações urgentes sobre atualizações em segundo plano",
+      "explanation": "O reconciler 'stack' pré-Fiber fazia todo seu trabalho em uma chamada recursiva única e não interrompível. Uma árvore grande podia bloquear o tratamento de input por centenas de milissegundos. Fiber quebra a renderização em pequenas unidades que podem ceder ao navegador e ser reordenadas por prioridade, habilitando funcionalidades como concurrent rendering e Suspense."
+    },
+    {
+      "id": 48,
+      "type": "multiple_choice",
+      "topic": "Reconciliação & Diffing",
+      "question": "Qual das seguintes melhor captura o que o Fiber mudou em como o React funciona?",
+      "options": [
+        "Fiber substituiu o virtual DOM por mutação direta do DOM, removendo a etapa de diffing por completo",
+        "Fiber tornou tanto as fases de render quanto de commit assíncronas e interrompíveis",
+        "Fiber reimplementou a reconciliação como um scheduler cooperativo de unidades de trabalho — a fase de render se tornou interrompível e priorizável, enquanto a fase de commit permaneceu síncrona",
+        "Fiber transformou cada componente em uma coroutine para que sua função de render possa suspender e retomar no meio da execução"
+      ],
+      "answer": "Fiber reimplementou a reconciliação como um scheduler cooperativo de unidades de trabalho — a fase de render se tornou interrompível e priorizável, enquanto a fase de commit permaneceu síncrona",
+      "explanation": "Fiber manteve o virtual DOM e o modelo de duas fases; o que mudou foi como a fase de render executa. Agora ela processa uma fiber (uma unidade de trabalho) por vez e pode ceder ao navegador entre as unidades. O commit continua atômico — mutações parciais do DOM seriam um desastre."
+    },
+    {
+      "id": 49,
+      "type": "multiple_choice",
+      "topic": "Reconciliação & Diffing",
+      "question": "Um dev sênior afirma: 'Fiber foi o que tornou o React rápido.' Qual é a crítica mais precisa a essa afirmação?",
+      "options": [
+        "Está correto — Fiber introduziu atualizações incrementais do DOM, que o reconciler anterior não tinha",
+        "É enganoso — Fiber não torna a renderização bruta mais rápida; ele a torna interrompível e priorizável, para que atualizações urgentes não sejam bloqueadas atrás de menos importantes. O throughput é aproximadamente o mesmo; o que melhorou foi a responsividade",
+        "Está errado — Fiber na verdade tornou os renders iniciais mais lentos devido ao overhead de scheduling, e só é benéfico para funcionalidades de concurrent",
+        "Está correto — Fiber substituiu o diff O(n³) por um diff O(n), que é a principal fonte do ganho de velocidade"
+      ],
+      "answer": "É enganoso — Fiber não torna a renderização bruta mais rápida; ele a torna interrompível e priorizável, para que atualizações urgentes não sejam bloqueadas atrás de menos importantes. O throughput é aproximadamente o mesmo; o que melhorou foi a responsividade",
+      "explanation": "O diff O(n) é anterior ao Fiber. A contribuição do Fiber é o scheduling: o trabalho total de CPU é inalterado (ou ligeiramente maior devido ao bookkeeping), mas agora pode ser distribuído e repriorizado. 'Rápido' no sentido de latência percebida, não de throughput."
+    },
+    {
+      "id": 50,
+      "type": "multiple_choice",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "O que useCallback realmente retorna?",
+      "options": [
+        "O resultado cacheado de chamar a função",
+        "A mesma referência de função entre renders, desde que suas dependências não tenham mudado",
+        "Uma nova função que internamente memoiza seu valor de retorno",
+        "Uma ref contendo a função, para que sua identidade possa ser mutada sem re-renderizar"
+      ],
+      "answer": "A mesma referência de função entre renders, desde que suas dependências não tenham mudado",
+      "explanation": "useCallback memoiza a própria função, não sua saída. Enquanto o array de dependências permanecer superficialmente igual, você recebe de volta exatamente a mesma instância de função que recebeu no render anterior — útil para manter a igualdade de referência estável ao passar callbacks para filhos memoizados."
+    },
+    {
+      "id": 51,
+      "type": "multiple_choice",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "Qual das seguintes é a descrição mais precisa de useCallback(fn, deps)?",
+      "options": [
+        "É açúcar sintático para useMemo(() => fn(), deps)",
+        "Ele retorna o resultado memoizado da invocação de fn",
+        "É equivalente a useMemo(() => fn, deps) — ele cacheia a referência da função, não a chamada",
+        "Ele previne que fn seja redefinida em renders subsequentes ao içá-la para fora do componente"
+      ],
+      "answer": "É equivalente a useMemo(() => fn, deps) — ele cacheia a referência da função, não a chamada",
+      "explanation": "useCallback e useMemo são irmãos. useCallback(fn, deps) é literalmente o mesmo que useMemo(() => fn, deps): ambos mantêm algo estável entre renders até as deps mudarem. A diferença é que a factory do useMemo é esperada para computar um valor, enquanto o payload do useCallback é a própria função."
+    },
+    {
+      "id": 52,
+      "type": "multiple_choice",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "Um colega escreve: `const handler = useCallback(() => doThing(value), []);`. Qual é o bug sutil?",
+      "options": [
+        "useCallback não pode ser usado com arrow functions; ele requer uma declaração de função nomeada",
+        "O array de dependências vazio faz com que a closure capture o `value` inicial para sempre — quando `value` atualiza, `handler` ainda referencia o antigo. A correção é adicionar `value` às deps",
+        "useCallback sempre recomputa independentemente das deps, então isso é só overhead morto",
+        "useCallback retorna undefined no primeiro render, então `handler` vai lançar erro quando invocado"
+      ],
+      "answer": "O array de dependências vazio faz com que a closure capture o `value` inicial para sempre — quando `value` atualiza, `handler` ainda referencia o antigo. A correção é adicionar `value` às deps",
+      "explanation": "useCallback estabiliza a referência da função, mas a função ainda fecha sobre o que estava em escopo quando ela foi criada. Com deps = [], esse snapshot é tirado uma vez na montagem e nunca atualizado — um bug clássico de stale closure. Listar `value` no array de deps faz o useCallback reconstruir a função sempre que `value` mudar."
+    },
+    {
+      "id": 53,
+      "type": "multiple_choice",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "Qual cenário é o caso clássico para recorrer ao useMemo?",
+      "options": [
+        "Impedir um componente filho de re-renderizar quando seu pai atualiza",
+        "Cachear o resultado de uma computação síncrona cara (ex.: filtrar uma tabela de 10k linhas) para que não seja refeita a cada render",
+        "Persistir um valor entre remontagens do mesmo componente",
+        "Evitar que um effect rode novamente quando apenas estado não relacionado muda"
+      ],
+      "answer": "Cachear o resultado de uma computação síncrona cara (ex.: filtrar uma tabela de 10k linhas) para que não seja refeita a cada render",
+      "explanation": "O propósito do useMemo é pular a recomputação de um valor derivado quando suas entradas não mudaram. Filtros, ordenações e reduções pesadas são o encaixe canônico. Prevenir re-renders de filhos é trabalho do React.memo, persistir entre desmontagens requer armazenamento externo, e as dependências de effects são governadas pelo próprio array de deps do useEffect."
+    },
+    {
+      "id": 54,
+      "type": "multiple_choice",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "Quando vale a pena de verdade recorrer ao useMemo?",
+      "options": [
+        "Em todo valor derivado, para seguir a boa prática",
+        "Quando a computação é mensuravelmente cara em cada render, OU quando a identidade de referência do valor resultante importa para memoização downstream (ex.: ele é passado para React.memo ou usado como dep de um effect)",
+        "Apenas quando o valor é um objeto, porque primitivos não precisam de memoização",
+        "Sempre que o componente re-renderiza mais que algumas vezes por segundo"
+      ],
+      "answer": "Quando a computação é mensuravelmente cara em cada render, OU quando a identidade de referência do valor resultante importa para memoização downstream (ex.: ele é passado para React.memo ou usado como dep de um effect)",
+      "explanation": "Existem na verdade duas razões para usar useMemo. A óbvia é economia de CPU em trabalho pesado. A mais sutil é estabilidade de referência — se você passa `{ a, b }` para um filho memoizado ou para o array de deps de um effect, um objeto novo a cada render derrota a otimização. Memoizar o objeto preserva a identidade referencial até as entradas mudarem."
+    },
+    {
+      "id": 55,
+      "type": "multiple_choice",
+      "topic": "useMemo, useCallback, React.memo",
+      "question": "Qual desses usos de useMemo tem mais chance de ser um saldo negativo?",
+      "options": [
+        "Memoizar o resultado de `array.filter(x => x.active)` num array de 50.000 itens usado por um gráfico",
+        "Memoizar `{ x, y }` que é passado como prop para um <Marker /> envolto em React.memo",
+        "Memoizar um primitivo como `useMemo(() => count + 1, [count])` retornado diretamente em JSX",
+        "Memoizar um objeto passado para o array de dependências de um useEffect"
+      ],
+      "answer": "Memoizar um primitivo como `useMemo(() => count + 1, [count])` retornado diretamente em JSX",
+      "explanation": "A primeira opção é um ganho real de CPU; a segunda e a quarta protegem a igualdade de referência downstream. Memoizar `count + 1` não faz nem uma coisa nem outra — primitivos comparam por valor, a computação é uma adição, e o próprio useMemo tem overhead de bookkeeping (armazenar o valor, comparar deps). Ruído puro, ligeiramente negativo no saldo."
+    },
+    {
+      "id": 56,
+      "type": "multiple_choice",
+      "topic": "Context API",
+      "question": "Qual evento faz com que todo componente usando useContext(MyContext) re-renderize?",
+      "options": [
+        "Qualquer atualização de estado em qualquer lugar acima do consumidor na árvore",
+        "A prop `value` do MyContext.Provider mudando por referência (comparada com Object.is)",
+        "O próprio estado do consumidor atualizando",
+        "Um irmão do Provider re-renderizando"
+      ],
+      "answer": "A prop `value` do MyContext.Provider mudando por referência (comparada com Object.is)",
+      "explanation": "Re-renders de contexto são guiados unicamente pela mudança de referência da prop `value` do Provider, comparada via Object.is. Conteúdos idênticos em um objeto recém-alocado ainda vão disparar todos os consumidores — que é exatamente por que inserir `value={{ ...something }}` inline no JSX é uma armadilha bem conhecida."
+    },
+    {
+      "id": 57,
+      "type": "multiple_choice",
+      "topic": "Context API",
+      "question": "Dois renders de um Provider produzem valores que são profundamente iguais mas não a mesma referência. O que acontece com os consumidores?",
+      "options": [
+        "Nada — o React faz uma checagem de igualdade superficial nos campos do valor e desiste",
+        "Nada — o React compara valores de contexto em profundidade para evitar re-renders espúrios",
+        "Todo consumidor re-renderiza, porque o React compara valores de contexto com Object.is, que para objetos é igualdade de referência",
+        "Consumidores re-renderizam apenas se não estiverem envoltos em React.memo"
+      ],
+      "answer": "Todo consumidor re-renderiza, porque o React compara valores de contexto com Object.is, que para objetos é igualdade de referência",
+      "explanation": "O React intencionalmente evita comparação profunda ou superficial de valores de contexto — ambas seriam caras e ambíguas. Ele usa Object.is, que para objetos é simplesmente igualdade de referência. Um novo objeto que 'parece igual' é, no que diz respeito ao contexto, um valor completamente novo, e todos os consumidores re-renderizam."
+    },
+    {
+      "id": 58,
+      "type": "multiple_choice",
+      "topic": "Context API",
+      "question": "Um componente lê `const { user } = useContext(AuthContext)`. O value do Provider é `useMemo(() => ({ user, token }), [user, token])`. Apenas `token` muda. O que acontece com o componente?",
+      "options": [
+        "Ele não re-renderiza, porque destructurou `user` e o React rastreia subscriptions por campo",
+        "Ele não re-renderiza, porque o useMemo impediu a referência do valor de mudar",
+        "Ele re-renderiza, porque a referência do value do Provider mudou (o useMemo recomputou quando `token` mudou), e contexto não tem conceito de subscription por campo",
+        "Ele re-renderiza apenas se não estiver envolto em React.memo"
+      ],
+      "answer": "Ele re-renderiza, porque a referência do value do Provider mudou (o useMemo recomputou quando `token` mudou), e contexto não tem conceito de subscription por campo",
+      "explanation": "Essa é a limitação central do contexto. Não há seletores — consumidores não podem assinar campos individuais. Quando `token` atualiza, o useMemo produz um novo objeto (a dep dele mudou), a referência do value do Provider muda, e o React notifica todo consumidor independentemente de quais campos eles realmente leem. A correção é dividir AuthContext em UserContext e TokenContext, ou usar uma biblioteca com suporte a seletores."
+    },
+    {
+      "id": 59,
+      "type": "multiple_choice",
+      "topic": "Context API",
+      "question": "Você está projetando um contexto que expõe tanto um valor de estado quanto um setter. Qual padrão minimiza re-renders desnecessários?",
+      "options": [
+        "Forneça-os juntos: `<Ctx.Provider value={{ state, setState }}>` para manter a API simples",
+        "Use um único contexto mas memoize o valor com `useMemo(() => ({ state, setState }), [state])`",
+        "Divida em dois contextos: um ValueContext segurando `state`, e um DispatchContext segurando `setState`. Componentes que só precisam disparar ações não vão re-renderizar quando `state` mudar",
+        "Armazene `state` em uma ref e exponha só a ref pelo contexto, para que re-renders nunca aconteçam"
+      ],
+      "answer": "Divida em dois contextos: um ValueContext segurando `state`, e um DispatchContext segurando `setState`. Componentes que só precisam disparar ações não vão re-renderizar quando `state` mudar",
+      "explanation": "Setters retornados por useState/useReducer são estáveis em referência entre renders. Ao dar-lhes seu próprio contexto, consumidores que só fazem dispatch assinam um valor que efetivamente nunca muda, então nunca são re-renderizados por atualizações de estado. Esse é um padrão explicitamente recomendado nos docs do React (e usado internamente por bibliotecas como o react-redux)."
+    },
+    {
+      "id": 60,
+      "type": "multiple_choice",
+      "topic": "Context API",
+      "question": "Um colega propõe: 'É só colocar o estado numa ref e expor a ref pelo contexto — assim nada nunca re-renderiza.' Qual é a objeção mais forte?",
+      "options": [
+        "Refs não podem ser colocadas dentro de valores de contexto; o React vai lançar erro em runtime",
+        "Mutar o `.current` de uma ref não notifica o React, então os consumidores não vão re-renderizar quando o valor mudar — o que significa que a UI vai silenciosamente dessincronizar do estado. Refs são para valores que o React não deveria rastrear, não para estado compartilhado",
+        "Funciona, mas só se cada consumidor estiver envolto em React.memo, do contrário eles re-renderizam mesmo assim",
+        "Refs são resetadas a cada render, então o valor seria perdido"
+      ],
+      "answer": "Mutar o `.current` de uma ref não notifica o React, então os consumidores não vão re-renderizar quando o valor mudar — o que significa que a UI vai silenciosamente dessincronizar do estado. Refs são para valores que o React não deveria rastrear, não para estado compartilhado",
+      "explanation": "A proposta de fato elimina re-renders — eliminando a reatividade por completo. Refs são uma escape hatch para dados que o React explicitamente não deveria rastrear (nós DOM, IDs de timer, variáveis mutáveis de instância). Usá-las para estado compartilhado de aplicação significa que atualizações não vão propagar para a UI. A ferramenta certa para 'estado compartilhado sem churn de contexto' é dividir contextos ou uma store externa (Zustand, Jotai, Redux) com seletores adequados."
+    },
+    {
+      "id": 61,
+      "type": "multiple_choice",
+      "topic": "Context API",
+      "question": "Qual das seguintes é a *única* afirmação mais segura sobre um Provider que expõe tanto state quanto um dispatch estável?",
+      "options": [
+        "Memoizar o objeto de valor com `useMemo(() => ({ state, dispatch }), [state, dispatch])` é funcionalmente equivalente a dividir em dois contextos",
+        "Envolver cada consumidor em React.memo permite manter com segurança state e dispatch no mesmo contexto sem custo de performance",
+        "Dividir em um StateContext e um DispatchContext é o único padrão que impede consumidores que só fazem dispatch de re-renderizar quando o state muda — porque a estabilidade de referência do dispatch sozinha não é suficiente quando ele é empacotado com state em um único objeto",
+        "Tanto o dispatch do useReducer quanto o setter do useState são estáveis em referência, então consumidores de qualquer um deles nunca vão re-renderizar, independentemente de como o contexto for estruturado"
+      ],
+      "answer": "Dividir em um StateContext e um DispatchContext é o único padrão que impede consumidores que só fazem dispatch de re-renderizar quando o state muda — porque a estabilidade de referência do dispatch sozinha não é suficiente quando ele é empacotado com state em um único objeto",
+      "explanation": "Sutil mas importante. Sim, `dispatch` é estável em referência. Mas se você empacota como `{ state, dispatch }`, o *objeto* recebe uma nova referência sempre que `state` muda — e o contexto compara o objeto, não seus campos. Memoizar também não ajuda, já que as deps do memo incluem `state`. A única forma de realmente isolar consumidores que só fazem dispatch é colocar `dispatch` atrás de seu próprio contexto, onde o valor literalmente nunca muda."
+    }
+  ]
+}
